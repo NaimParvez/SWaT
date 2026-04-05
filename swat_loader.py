@@ -403,8 +403,8 @@ def _select_features(df: pd.DataFrame) -> pd.DataFrame:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def load_swat(
-    normal_csv: str = '/kaggle/input/datasets/naimparvezz/swat-dataset/SWat_Dataset/SWaT_Dataset_Normal_v1.csv',
-    attack_csv: str = '/kaggle/input/datasets/naimparvezz/swat-dataset/SWat_Dataset/SWaT_Dataset_Attack_v0.csv',
+    normal_csv: str = '/kaggle/input/datasets/naimparvezz/swat-dataset/SWaT_Dataset_Normal_v1.csv',
+    attack_csv: str = '/kaggle/input/datasets/naimparvezz/swat-dataset/SWaT_Dataset_Attack_v0.csv',
     use_kaggle_merged: str = None,
     window_size: int = WINDOW_SIZE,
     verbose: bool = True
