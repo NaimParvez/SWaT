@@ -580,12 +580,30 @@ class SWaTDataset(Dataset):
         # Metadata for localization evaluation
         # Use the last timestep's metadata (most relevant for label)
         last = idx + self.window_size - 1
+        attack_id = self.attack_ids[last]
+        if pd.isna(attack_id):
+            attack_id = -1
+        else:
+            attack_id = int(attack_id)
+
+        attacked_sensor = self.attacked_sensors[last]
+        if attacked_sensor is None or pd.isna(attacked_sensor):
+            attacked_sensor = ''
+        else:
+            attacked_sensor = str(attacked_sensor)
+
+        attack_type = self.attack_types[last]
+        if attack_type is None or pd.isna(attack_type):
+            attack_type = ''
+        else:
+            attack_type = str(attack_type)
+
         metadata = {
-            'attack_id':       self.attack_ids[last],
-            'attacked_sensor': self.attacked_sensors[last],
-            'attack_type':     self.attack_types[last],
-            'timestamp':       self.timestamps[last],
-            'window_start':    self.timestamps[idx],
+            'attack_id':       attack_id,
+            'attacked_sensor': attacked_sensor,
+            'attack_type':     attack_type,
+            'timestamp':       str(self.timestamps[last]),
+            'window_start':    str(self.timestamps[idx]),
         }
         
         return x, y, metadata
