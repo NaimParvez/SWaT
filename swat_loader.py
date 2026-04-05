@@ -258,32 +258,86 @@ for aid in ATTACK_MAP:
 
 def _load_csv(path: str) -> pd.DataFrame:
     """Load a SWaT CSV file and standardize column names."""
-    df = pd.read_csv(path, low_memory=False)
-    df.columns = df.columns.str.strip()
-    
-    # Detect timestamp column
-    ts_candidates = [c for c in df.columns
-                     if 'timestamp' in c.lower() or 'time' in c.lower()]
-    if not ts_candidates:
-        raise ValueError(f"No timestamp column found in {path}. "
-                         f"Columns: {df.columns.tolist()}")
-    ts_col = ts_candidates[0]
-    
-    # Parse timestamp — handle multiple formats
-    df['Timestamp'] = pd.to_datetime(
-        df[ts_col].astype(str).str.strip(),
-        dayfirst=True,       # SWaT uses DD/MM/YYYY
-        errors='coerce'
+    def _candidate_datetime_series(frame: pd.DataFrame) -> pd.Series:
+        cols = [str(c).strip() for c in frame.columns]
+        frame.columns = cols
+        lower = {c: c.lower() for c in cols}
+
+        # Preferred path: explicit timestamp-like column names.
+        ts_cols = [
+            c for c in cols
+            if ('timestamp' in lower[c]) or (lower[c] in {'time', 'datetime', 'date_time'})
+        ]
+        if ts_cols:
+            return frame[ts_cols[0]].astype(str).str.strip()
+
+        # Common SWaT variant: separate Date + Time columns.
+        date_cols = [c for c in cols if 'date' in lower[c]]
+        time_cols = [
+            c for c in cols
+            if ('time' in lower[c]) and ('date' not in lower[c])
+        ]
+        if date_cols and time_cols:
+            return (
+                frame[date_cols[0]].astype(str).str.strip() + ' ' +
+                frame[time_cols[0]].astype(str).str.strip()
+            )
+
+        # Fallback: infer by parse success on early columns (e.g., "Unnamed: 0").
+        nrows = len(frame)
+        if nrows == 0:
+            raise ValueError("CSV is empty")
+
+        sample_n = min(2000, nrows)
+        best_col = None
+        best_ratio = 0.0
+        for c in cols[: min(8, len(cols))]:
+            sample = frame[c].astype(str).str.strip().head(sample_n)
+            parsed = pd.to_datetime(sample, dayfirst=True, errors='coerce')
+            ratio = float(parsed.notna().mean())
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_col = c
+
+        if best_col is not None and best_ratio >= 0.8:
+            return frame[best_col].astype(str).str.strip()
+
+        raise ValueError(
+            f"No timestamp column found. Columns: {cols}"
+        )
+
+    last_error = None
+    attempted_columns = []
+    for header_row in [0, 1, 2, 3]:
+        df = None
+        try:
+            df = pd.read_csv(path, low_memory=False, header=header_row)
+            ts_source = _candidate_datetime_series(df)
+            df['Timestamp'] = pd.to_datetime(
+                ts_source,
+                dayfirst=True,  # SWaT uses DD/MM/YYYY
+                errors='coerce'
+            )
+
+            n_bad = int(df['Timestamp'].isna().sum())
+            if n_bad > 0:
+                print(f"  ⚠️  Dropped {n_bad} rows with unparseable timestamps")
+                df = df.dropna(subset=['Timestamp'])
+
+            if len(df) == 0:
+                raise ValueError("No valid timestamp rows after parsing")
+
+            df = df.sort_values('Timestamp').reset_index(drop=True)
+            return df
+        except Exception as exc:
+            last_error = exc
+            attempted_columns.append(getattr(df, 'columns', []))
+
+    raise ValueError(
+        f"Failed to parse SWaT CSV timestamps in {path}. "
+        f"Tried header rows 0-3. Last error: {last_error}. "
+        f"Sample attempted columns: {[list(map(str, c))[:12] for c in attempted_columns]}"
     )
-    
-    # Drop rows with unparseable timestamps
-    n_bad = df['Timestamp'].isna().sum()
-    if n_bad > 0:
-        print(f"  ⚠️  Dropped {n_bad} rows with unparseable timestamps")
-        df = df.dropna(subset=['Timestamp'])
-    
-    df = df.sort_values('Timestamp').reset_index(drop=True)
-    return df
 
 
 def _encode_label(df: pd.DataFrame) -> pd.DataFrame:
