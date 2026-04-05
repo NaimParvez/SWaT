@@ -8,8 +8,31 @@ from swat_loader import load_swat, SWaTDataset, ALL_FEATURES
 from lstm_model import (LSTMAutoencoder, train_epoch, val_epoch,
                          compute_threshold, evaluate)
 
+
+def choose_device() -> str:
+    """
+    Select a usable compute device.
+    Some Kaggle GPU/PyTorch combinations report CUDA as available
+    but fail when an LSTM is moved to GPU (no kernel image).
+    """
+    if not torch.cuda.is_available():
+        return 'cpu'
+
+    try:
+        torch.zeros(1, device='cuda')
+        probe = torch.nn.LSTM(1, 1, batch_first=True).to('cuda')
+        x = torch.zeros(1, 2, 1, device='cuda')
+        _ = probe(x)
+        torch.cuda.synchronize()
+        return 'cuda'
+    except Exception as exc:
+        print("⚠️  CUDA detected but unusable on this runtime.")
+        print(f"   Reason: {type(exc).__name__}: {exc}")
+        print("   Falling back to CPU.")
+        return 'cpu'
+
 # ── Config ──────────────────────────────────────────────────────────
-DEVICE     = 'cuda' if torch.cuda.is_available() else 'cpu'
+DEVICE     = choose_device()
 EPOCHS     = 30
 BATCH      = 256
 LR         = 1e-3
