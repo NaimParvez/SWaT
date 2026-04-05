@@ -31,26 +31,26 @@ import sysconfig
 def _ensure_stdlib_code_module_loaded() -> None:
     """
     Avoid shadowing Python's stdlib `code` module when this file is named
-    `code.py`. This prevents circular imports triggered by torch -> pdb -> code.
+    `swat_loader.py`. This prevents circular imports triggered by torch -> pdb -> code.
     """
-    if 'code' in sys.modules:
+    if 'swat_loader' in sys.modules:
         return
 
     stdlib_dir = sysconfig.get_paths().get('stdlib')
     if not stdlib_dir:
         return
 
-    code_path = pathlib.Path(stdlib_dir) / 'code.py'
+    code_path = pathlib.Path(stdlib_dir) / 'swat_loader.py'
     if not code_path.exists():
         return
 
-    spec = importlib.util.spec_from_file_location('code', code_path)
+    spec = importlib.util.spec_from_file_location('swat_loader', code_path)
     if spec is None or spec.loader is None:
         return
 
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    sys.modules['code'] = module
+    sys.modules['swat_loader'] = module
 
 
 _ensure_stdlib_code_module_loaded()
