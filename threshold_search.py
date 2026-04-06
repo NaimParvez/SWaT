@@ -25,7 +25,7 @@ test_loader = DataLoader(test_ds, batch_size=512, shuffle=False)
 
 # Load model
 model = LSTMAutoencoder(n_features=51).to(DEVICE)
-model.load_state_dict(torch.load('lstm_best.pt', map_location=DEVICE))
+model.load_state_dict(torch.load('/kaggle/working/SWaT/lstm_best.pt', map_location=DEVICE))
 model.eval()
 
 # Collect val scores
