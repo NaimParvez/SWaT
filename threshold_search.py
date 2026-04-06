@@ -12,8 +12,8 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # Load data
 train_df, val_df, test_df, scaler, feats = load_swat(
-    normal_csv='SWaT_Dataset_Normal_v1.csv',
-    attack_csv='SWaT_Dataset_Attack_v0.csv',
+    normal_csv='/kaggle/input/datasets/naimparvezz/swat-dataset/SWaT_Dataset_Normal_v1.csv',
+    attack_csv='/kaggle/input/datasets/naimparvezz/swat-dataset/SWaT_Dataset_Attack_v0.csv',
     verbose=False
 )
 
