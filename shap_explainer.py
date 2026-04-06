@@ -37,13 +37,13 @@ print(f"MC passes: T={T}")
 # ── Load data and model ──────────────────────────────────────────────
 print("\nLoading data...")
 train_df, val_df, test_df, scaler, feats = load_swat(
-    normal_csv='SWaT_Dataset_Normal_v1.csv',
-    attack_csv='SWaT_Dataset_Attack_v0.csv',
+    normal_csv='/kaggle/input/datasets/naimparvezz/swat-dataset/SWaT_Dataset_Normal_v1.csv',
+    attack_csv='/kaggle/input/datasets/naimparvezz/swat-dataset/SWaT_Dataset_Attack_v0.csv',
     verbose=False
 )
 
 model = LSTMAutoencoder(n_features=51).to(DEVICE)
-model.load_state_dict(torch.load('lstm_best.pt', map_location=DEVICE))
+model.load_state_dict(torch.load('/kaggle/working/SWaT/lstm_best.pt', map_location=DEVICE))
 model.eval()
 print("Model loaded.")
 
