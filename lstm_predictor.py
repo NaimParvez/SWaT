@@ -121,8 +121,13 @@ def train_predictor(
     model = LSTMPredictor(n_features=51, hidden=64, dropout=0.2).to(DEVICE)
     opt   = torch.optim.Adam(model.parameters(), lr=lr,
                              weight_decay=1e-5)
-    sched = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        opt, patience=4, factor=0.5, verbose=False)
+    try:
+        sched = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            opt, patience=4, factor=0.5, verbose=False)
+    except TypeError:
+        # Older torch versions do not support the `verbose` keyword.
+        sched = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            opt, patience=4, factor=0.5)
 
     best_val  = float('inf')
     best_state = None
