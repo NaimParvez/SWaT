@@ -39,19 +39,19 @@ train_df, val_df, test_df, scaler, feats = load_swat(
 # non-tensor objects (e.g., sklearn scaler), so we load it as trusted.
 try:
     ckpt = torch.load(
-        'lstm_predictor_best.pt',
+        '/kaggle/input/models/naimparvezz/lstm-predictor/other/default/1/lstm_predictor_best.pt',
         map_location=DEVICE,
         weights_only=False
     )
 except TypeError:
     # Older torch versions do not support the weights_only argument.
-    ckpt = torch.load('lstm_predictor_best.pt', map_location=DEVICE)
+    ckpt = torch.load('/kaggle/input/models/naimparvezz/lstm-predictor/other/default/1/lstm_predictor_best.pt', map_location=DEVICE)
 model = LSTMPredictor(n_features=51).to(DEVICE)
 model.load_state_dict(ckpt['state_dict'])
 model.eval()
 print("Prediction model loaded.")
 
-thresh_info = json.load(open('optimal_threshold_pred.json'))
+thresh_info = json.load(open('/kaggle/working/SWaT/SWaT/optimal_threshold_pred.json'))
 threshold   = thresh_info['threshold']
 
 # ── Mean baseline (one timestep × 51 sensors) ─────────────────────────
